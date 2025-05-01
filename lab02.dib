@@ -100,14 +100,6 @@ public async Task ShowResult() {
             if (contentItem is MessageTextContent textItem)
             {
                 Console.Write(textItem.Text);
-                if (textItem.Annotations.Count > 0) {
-                    foreach (var annotation in textItem.Annotations) {
-                        Console.WriteLine($" (annotations): {annotation}");
-                        if (annotation is MessageTextFilePathAnnotation pathAnnotation) {
-                            Console.WriteLine($"  {pathAnnotation.FileId}");
-                        } 
-                    }
-                }
             }
             Console.WriteLine();
         }
@@ -129,25 +121,23 @@ await Chat("Create a pie chart showing cost by category");
 
 using System.IO;
 public async Task SaveGeneratedFiles() {
-    Response<PageableList<ThreadMessage>> afterRunMessagesResponse
-        = await client.GetMessagesAsync(thread.Id);
-    IReadOnlyList<ThreadMessage> messages = afterRunMessagesResponse.Value.Data;
+    PageableList<ThreadMessage> response = await client.GetMessagesAsync(thread.Id);
+    IReadOnlyList<ThreadMessage> messages = response.Data;
     foreach (ThreadMessage threadMessage in messages)
     {
         foreach (MessageContent contentItem in threadMessage.ContentItems)
         {
-            if (contentItem is MessageTextContent textItem)
+            if (contentItem is MessageTextContent textItem && textItem.Annotations.Count > 0)
             {
-                if (textItem.Annotations.Count > 0) {
-                    foreach (var annotation in textItem.Annotations) {
-                        if (annotation is MessageTextFilePathAnnotation pathAnnotation) {
-                            string fileId = pathAnnotation.FileId;
-                            AgentFile file = await client.GetFileAsync(fileId);
-                            BinaryData fileContent = await client.GetFileContentAsync(fileId);
-                            string fileName = Path.GetFileName(file.Filename);
-                            await File.WriteAllBytesAsync(fileName, fileContent.ToArray());
-                            Console.WriteLine($"saved: {fileName}");
-                        }
+                foreach (var annotation in textItem.Annotations)
+                {
+                    if (annotation is MessageTextFilePathAnnotation pathAnnotation) {
+                        string fileId = pathAnnotation.FileId;
+                        AgentFile file = await client.GetFileAsync(fileId);
+                        BinaryData fileContent = await client.GetFileContentAsync(fileId);
+                        string fileName = Path.GetFileName(file.Filename);
+                        await File.WriteAllBytesAsync(fileName, fileContent.ToArray());
+                        Console.WriteLine($"saved: {fileName}");
                     }
                 }
             }

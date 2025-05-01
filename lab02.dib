@@ -131,7 +131,8 @@ public async Task SaveGeneratedFiles() {
             {
                 foreach (var annotation in textItem.Annotations)
                 {
-                    if (annotation is MessageTextFilePathAnnotation pathAnnotation) {
+                    if (annotation is MessageTextFilePathAnnotation pathAnnotation)
+                    {
                         string fileId = pathAnnotation.FileId;
                         AgentFile file = await client.GetFileAsync(fileId);
                         BinaryData fileContent = await client.GetFileContentAsync(fileId);

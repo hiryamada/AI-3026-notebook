@@ -10,23 +10,18 @@
 
 #!csharp
 
+using System.IO;
+using Azure.AI.Projects;
+using Azure.Identity;
+using Azure;
 using dotenv.net;
 using dotenv.net.Utilities;
 
 #!csharp
 
 DotEnv.Load();
-
-#!csharp
-
 var connectionString = EnvReader.GetStringValue("AZURE_AI_AGENT_PROJECT_CONNECTION_STRING");
 var deployName = EnvReader.GetStringValue("AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME");
-
-#!csharp
-
-using Azure.AI.Projects;
-using Azure.Identity;
-using Azure;
 
 #!csharp
 
@@ -34,7 +29,7 @@ AgentsClient client = new AgentsClient(connectionString, new DefaultAzureCredent
 
 #!csharp
 
-Response<Agent> agentResponse = await client.CreateAgentAsync(
+Agent agent = await client.CreateAgentAsync(
     model: deployName,
     name: "data-agent3",
     instructions: "You are an AI agent that analyzes the data in the file that has been uploaded. If the user requests a chart, create it and save it as a .png file.",
@@ -43,18 +38,17 @@ Response<Agent> agentResponse = await client.CreateAgentAsync(
         new CodeInterpreterToolDefinition() 
     } 
 );
-Agent agent = agentResponse.Value;
 
 #!csharp
 
-Response<AgentThread> threadResponse = await client.CreateThreadAsync();
-AgentThread thread = threadResponse.Value;
+AgentThread thread = await client.CreateThreadAsync();
 
 #!csharp
 
 AgentFile uploadedAgentFile = await client.UploadFileAsync(
     filePath: "data.txt",
-    purpose: AgentFilePurpose.Agents);
+    purpose: AgentFilePurpose.Agents
+);
 
 #!csharp
 
@@ -64,34 +58,34 @@ var attachment = new MessageAttachment(fileId: uploadedAgentFile.Id, tools: tool
 #!csharp
 
 public async Task AddMessageToThread(string message, IEnumerable<MessageAttachment> attachments = null) {
-    Response<ThreadMessage> messageResponse = await client.CreateMessageAsync(
+    await client.CreateMessageAsync(
         thread.Id,
         MessageRole.User,
         content: message,
-        attachments: attachments ?? Enumerable.Empty<MessageAttachment>());
+        attachments: attachments ?? Enumerable.Empty<MessageAttachment>()
+    );
 }
 await AddMessageToThread("What's the category with the highest cost?", new List<MessageAttachment> { attachment });
 
 #!csharp
 
 public async Task RunAndWait() {
-    Response<ThreadRun> runResponse = await client.CreateRunAsync(thread.Id, agent.Id);
+    ThreadRun run = await client.CreateRunAsync(thread.Id, agent.Id);
     do
     {
         await Task.Delay(TimeSpan.FromMilliseconds(500));
-        runResponse = await client.GetRunAsync(thread.Id, runResponse.Value.Id);
+        run = await client.GetRunAsync(thread.Id, run.Id);
     }
-    while (runResponse.Value.Status == RunStatus.Queued
-        || runResponse.Value.Status == RunStatus.InProgress);
+    while (run.Status == RunStatus.Queued
+        || run.Status == RunStatus.InProgress);
 }
 await RunAndWait();
 
 #!csharp
 
 public async Task ShowResult() {
-    Response<PageableList<ThreadMessage>> afterRunMessagesResponse
-    = await client.GetMessagesAsync(thread.Id);
-    IReadOnlyList<ThreadMessage> messages = afterRunMessagesResponse.Value.Data;
+    PageableList<ThreadMessage> response = await client.GetMessagesAsync(thread.Id);
+    IReadOnlyList<ThreadMessage> messages = response.Data;
     foreach (ThreadMessage threadMessage in messages)
     {
         Console.Write($"{threadMessage.CreatedAt:yyyy-MM-dd HH:mm:ss} - {threadMessage.Role,10}: ");
@@ -109,17 +103,16 @@ await ShowResult();
 
 #!csharp
 
-public async Task Chat(string message) {
+public async Task Chat(string message)
+{
     await AddMessageToThread(message);
     await RunAndWait();
     await ShowResult();
 }
-
 await Chat("Create a pie chart showing cost by category");
 
 #!csharp
 
-using System.IO;
 public async Task SaveGeneratedFiles() {
     PageableList<ThreadMessage> response = await client.GetMessagesAsync(thread.Id);
     IReadOnlyList<ThreadMessage> messages = response.Data;

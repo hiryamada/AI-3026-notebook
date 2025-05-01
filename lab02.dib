@@ -57,7 +57,7 @@ var attachment = new MessageAttachment(fileId: uploadedAgentFile.Id, tools: tool
 
 #!csharp
 
-public async Task AddMessageToThread(string message, IEnumerable<MessageAttachment> attachments = null) {
+async Task AddMessageToThread(string message, IEnumerable<MessageAttachment> attachments = null) {
     await client.CreateMessageAsync(
         thread.Id,
         MessageRole.User,
@@ -69,7 +69,7 @@ await AddMessageToThread("What's the category with the highest cost?", new List<
 
 #!csharp
 
-public async Task RunAndWait() {
+async Task RunAndWait() {
     ThreadRun run = await client.CreateRunAsync(thread.Id, agent.Id);
     do
     {
@@ -83,7 +83,7 @@ await RunAndWait();
 
 #!csharp
 
-public async Task ShowResult() {
+async Task ShowResult() {
     PageableList<ThreadMessage> response = await client.GetMessagesAsync(thread.Id);
     IReadOnlyList<ThreadMessage> messages = response.Data;
     foreach (ThreadMessage threadMessage in messages)
@@ -103,7 +103,7 @@ await ShowResult();
 
 #!csharp
 
-public async Task Chat(string message)
+async Task Chat(string message)
 {
     await AddMessageToThread(message);
     await RunAndWait();
@@ -113,7 +113,7 @@ await Chat("Create a pie chart showing cost by category");
 
 #!csharp
 
-public async Task SaveGeneratedFiles() {
+async Task SaveGeneratedFiles() {
     PageableList<ThreadMessage> response = await client.GetMessagesAsync(thread.Id);
     IReadOnlyList<ThreadMessage> messages = response.Data;
     foreach (ThreadMessage threadMessage in messages)

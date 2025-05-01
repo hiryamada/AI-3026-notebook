@@ -90,7 +90,7 @@ await RunAndWait();
 
 public async Task ShowResult() {
     Response<PageableList<ThreadMessage>> afterRunMessagesResponse
-        = await client.GetMessagesAsync(thread.Id);
+    = await client.GetMessagesAsync(thread.Id);
     IReadOnlyList<ThreadMessage> messages = afterRunMessagesResponse.Value.Data;
     foreach (ThreadMessage threadMessage in messages)
     {
@@ -100,12 +100,15 @@ public async Task ShowResult() {
             if (contentItem is MessageTextContent textItem)
             {
                 Console.Write(textItem.Text);
+                if (textItem.Annotations.Count > 0) {
+                    foreach (var annotation in textItem.Annotations) {
+                        Console.WriteLine($" (annotations): {annotation}");
+                        if (annotation is MessageTextFilePathAnnotation pathAnnotation) {
+                            Console.WriteLine($"  {pathAnnotation.FileId}");
+                        } 
+                    }
+                }
             }
-            else if (contentItem is MessageImageFileContent imageFileItem)
-            {
-                Console.Write($"<image from ID: {imageFileItem.FileId}");
-            }
-            
             Console.WriteLine();
         }
     }
@@ -124,4 +127,31 @@ await Chat("Create a pie chart showing cost by category");
 
 #!csharp
 
-// TODO downlaod the generated image
+using System.IO;
+public async Task SaveGeneratedFiles() {
+    Response<PageableList<ThreadMessage>> afterRunMessagesResponse
+        = await client.GetMessagesAsync(thread.Id);
+    IReadOnlyList<ThreadMessage> messages = afterRunMessagesResponse.Value.Data;
+    foreach (ThreadMessage threadMessage in messages)
+    {
+        foreach (MessageContent contentItem in threadMessage.ContentItems)
+        {
+            if (contentItem is MessageTextContent textItem)
+            {
+                if (textItem.Annotations.Count > 0) {
+                    foreach (var annotation in textItem.Annotations) {
+                        if (annotation is MessageTextFilePathAnnotation pathAnnotation) {
+                            string fileId = pathAnnotation.FileId;
+                            AgentFile file = await client.GetFileAsync(fileId);
+                            BinaryData fileContent = await client.GetFileContentAsync(fileId);
+                            string fileName = Path.GetFileName(file.Filename);
+                            await File.WriteAllBytesAsync(fileName, fileContent.ToArray());
+                            Console.WriteLine($"saved: {fileName}");
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+await SaveGeneratedFiles();

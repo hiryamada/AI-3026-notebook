@@ -22,6 +22,7 @@ using Microsoft.SemanticKernel.ChatCompletion;
 using Azure.AI.Projects;
 using Azure.Identity;
 using System.ComponentModel;
+using System.IO;
 
 #!csharp
 
@@ -209,24 +210,10 @@ public class ApprovalTerminationStragety : TerminationStrategy
         CancellationToken cancellationToken)
     {
         await Task.CompletedTask.ConfigureAwait(false);
-        return history.Last().Content.ToLower() == "no action needed";
+        var last = history.Last();
+        return last.Content.EndsWith("no action needed.", StringComparison.OrdinalIgnoreCase);
     }
 }
-
-#!csharp
-
-#pragma warning disable SKEXP0110
-var chat = new AgentGroupChat(incidentManagerAgent, devopsManagerAgent)
-{
-    ExecutionSettings = new() {
-        SelectionStrategy = new LabSelectionStragety(),
-        TerminationStrategy = new ApprovalTerminationStragety()
-    }
-};
-
-#!csharp
-
-chat.AddChatMessage(new ChatMessageContent(AuthorRole.User, "USER > sample_logs/log"));
 
 #!csharp
 
@@ -234,4 +221,32 @@ Directory.CreateDirectory("logs");
 foreach (var logFile in Directory.EnumerateFiles("sample_logs", "*"))
 {
     File.Copy(logFile, Path.Combine("logs", Path.GetFileName(logFile)), true);
+}
+
+#!csharp
+
+#pragma warning disable SKEXP0110
+
+foreach (var logFile in Directory.EnumerateFiles("logs", "*"))
+{
+    var chat = new AgentGroupChat(incidentManagerAgent, devopsManagerAgent)
+    {
+        ExecutionSettings = new()
+        {
+            SelectionStrategy = new LabSelectionStragety(),
+            TerminationStrategy = new ApprovalTerminationStragety()
+        }
+    };
+
+    chat.AddChatMessage(new ChatMessageContent(AuthorRole.User, $"USER > {logFile}"));
+    Console.WriteLine($"Ready to process log file: {logFile}");
+
+    // invoke a response from the agents
+    var result = chat.InvokeAsync();
+    await foreach (var message in result)
+    {
+        Console.WriteLine(message.Content);
+    }
+
+    Console.WriteLine();
 }

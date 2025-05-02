@@ -1,2 +1,6 @@
 .env
 labenv/
+
+# Keep empty output/ directory.
+/output/*
+!/output/.gitkeep

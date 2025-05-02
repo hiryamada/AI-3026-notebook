@@ -31,12 +31,9 @@ AgentsClient client = new AgentsClient(connectionString, new DefaultAzureCredent
 
 Agent agent = await client.CreateAgentAsync(
     model: deployName,
-    name: "data-agent3",
+    name: "data-agent",
     instructions: "You are an AI agent that analyzes the data in the file that has been uploaded. If the user requests a chart, create it and save it as a .png file.",
-    tools: new List<ToolDefinition>
-    { 
-        new CodeInterpreterToolDefinition() 
-    } 
+    tools: [ new CodeInterpreterToolDefinition() ]
 );
 
 #!csharp
@@ -52,8 +49,7 @@ AgentFile uploadedAgentFile = await client.UploadFileAsync(
 
 #!csharp
 
-List<ToolDefinition> tools = [ new CodeInterpreterToolDefinition() ];
-var attachment = new MessageAttachment(fileId: uploadedAgentFile.Id, tools: tools);
+var attachment = new MessageAttachment(fileId: uploadedAgentFile.Id, tools: [ new CodeInterpreterToolDefinition() ]);
 
 #!csharp
 
@@ -65,7 +61,7 @@ async Task AddMessageToThread(string message, IEnumerable<MessageAttachment> att
         attachments: attachments ?? Enumerable.Empty<MessageAttachment>()
     );
 }
-await AddMessageToThread("What's the category with the highest cost?", new List<MessageAttachment> { attachment });
+await AddMessageToThread("What's the category with the highest cost?", [ attachment ]);
 
 #!csharp
 
@@ -129,7 +125,7 @@ async Task SaveGeneratedFiles() {
                         string fileId = pathAnnotation.FileId;
                         AgentFile file = await client.GetFileAsync(fileId);
                         BinaryData fileContent = await client.GetFileContentAsync(fileId);
-                        string fileName = Path.GetFileName(file.Filename);
+                        string fileName = "output/" + Path.GetFileName(file.Filename);
                         await File.WriteAllBytesAsync(fileName, fileContent.ToArray());
                         Console.WriteLine($"saved: {fileName}");
                     }

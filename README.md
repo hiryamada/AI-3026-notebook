@@ -18,7 +18,7 @@
     - Storage Account
     - Key Vault
   - `.env` file generated. This file contains the connection string for Azure AI Project and model deployment name.
-- Open and run [lab02.dib](lab02.dib) / [lab03.dib](lab03.dib) / [lab04.dib](lab03.dib) / [lab05.dib](lab05.dib) in your GitHub Codespaces.
+- Open and run [lab02.dib](lab02.dib) / [lab03.dib](lab03.dib) / [lab04.dib](lab04.dib) / [lab05.dib](lab05.dib) in your GitHub Codespaces.
   - The notebook for lab 1 is not provided because it's about Azure AI Foundry interactive experience only, no coding.
 
 ## References

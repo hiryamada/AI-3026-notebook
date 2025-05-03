@@ -4,12 +4,6 @@
 
 #!csharp
 
-// https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/azure-ai-agent?pivots=programming-language-csharp
-
-// https://github.com/microsoft/semantic-kernel/blob/main/dotnet/samples/GettingStartedWithAgents/README.md
-
-#!csharp
-
 #r "nuget: Microsoft.SemanticKernel.Agents.AzureAI, *-*"
 #r "nuget: Microsoft.SemanticKernel"
 #r "nuget: Azure.Identity"

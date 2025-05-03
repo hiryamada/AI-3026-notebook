@@ -1,4 +1,4 @@
-# AZ-3026 C# Notebook
+# AI-3026 C# Notebook
 
 - Start your AI-3026 Lab 1 in Skillable
   - Lab 1 is ok for running all notebooks in this repository.

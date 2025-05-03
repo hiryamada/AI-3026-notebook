@@ -52,13 +52,6 @@ AgentThread thread = await client.CreateThreadAsync();
 
 #!csharp
 
-AgentFile uploadedAgentFile = await client.UploadFileAsync(
-    filePath: "data.txt",
-    purpose: AgentFilePurpose.Agents
-);
-
-#!csharp
-
 async Task AddMessageToThread(string message) {
     await client.CreateMessageAsync(
         thread.Id,
@@ -70,7 +63,7 @@ await AddMessageToThread("What's the category with the highest cost?");
 
 #!csharp
 
-async Task RunAndWait() {
+async Task<ThreadRun> RunAndWait() {
     ThreadRun run = await client.CreateRunAsync(thread.Id, agent.Id);
     do
     {
@@ -79,66 +72,47 @@ async Task RunAndWait() {
     }
     while (run.Status == RunStatus.Queued
         || run.Status == RunStatus.InProgress);
+    return run;
 }
-await RunAndWait();
+ThreadRun run = await RunAndWait();
 
 #!csharp
 
-async Task ShowResult() {
-    PageableList<ThreadMessage> response = await client.GetMessagesAsync(thread.Id);
-    IReadOnlyList<ThreadMessage> messages = response.Data;
-    foreach (ThreadMessage threadMessage in messages.Reverse())
-    {
-        Console.Write($"{threadMessage.CreatedAt:yyyy-MM-dd HH:mm:ss} - {threadMessage.Role,10}: ");
-        foreach (MessageContent contentItem in threadMessage.ContentItems)
-        {
-            if (contentItem is MessageTextContent textItem)
-            {
-                Console.Write(textItem.Text);
-            }
-            Console.WriteLine();
-        }
-    }
-}
-await ShowResult();
+async Task ShowResult(string runId) =>
+    (await client.GetMessagesAsync(thread.Id, runId))
+        .Value.Data.Reverse()
+        .Where(msg => msg.Role == MessageRole.Agent)
+        .SelectMany(msg => msg.ContentItems.OfType<MessageTextContent>())
+        .Select(content => content.Text)
+        .ToList()
+        .ForEach(Console.WriteLine);
+
+await ShowResult(run.Id);
 
 #!csharp
 
 async Task Chat(string message)
 {
     await AddMessageToThread(message);
-    await RunAndWait();
-    await ShowResult();
+    var run = await RunAndWait();
+    await ShowResult(run.Id);
 }
 await Chat("Create a pie chart showing cost by category");
 
 #!csharp
 
 async Task SaveGeneratedFile(string fileName) {
-    PageableList<ThreadMessage> response = await client.GetMessagesAsync(thread.Id);
-    IReadOnlyList<ThreadMessage> messages = response.Data;
-    foreach (ThreadMessage threadMessage in messages)
-    {
-        foreach (MessageContent contentItem in threadMessage.ContentItems)
-        {
-            if (contentItem is MessageTextContent textItem && textItem.Annotations.Count > 0)
-            {
-                foreach (var annotation in textItem.Annotations)
-                {
-                    if (annotation is MessageTextFilePathAnnotation pathAnnotation)
-                    {
-                        string fileId = pathAnnotation.FileId;
-                        AgentFile file = await client.GetFileAsync(fileId);
-                        BinaryData fileContent = await client.GetFileContentAsync(fileId);
-                        // string fileName = "output/" + Path.GetFileName(file.Filename);
-                        string outputPath = $"output/{fileName}";
-                        await File.WriteAllBytesAsync(outputPath, fileContent.ToArray());
-                        Console.WriteLine($"saved: {outputPath}");
-                    }
-                }
-            }
-        }
-    }
+    var annotations = (await client.GetMessagesAsync(thread.Id)).Value
+        .SelectMany(m => m.ContentItems.OfType<MessageTextContent>())
+        .SelectMany(c => c.Annotations.OfType<MessageTextFilePathAnnotation>());
+    await Task.WhenAll(annotations.Select(a => Save(a, fileName)));
+}
+async Task Save(MessageTextFilePathAnnotation annotation, string fileName)
+{
+    BinaryData fileContent = await client.GetFileContentAsync(annotation.FileId);
+    string outputPath = $"output/{fileName}";
+    await File.WriteAllBytesAsync(outputPath, fileContent.ToArray());
+    Console.WriteLine($"saved: {outputPath}");
 }
 await SaveGeneratedFile("chart.png");
 

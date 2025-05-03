@@ -1,6 +1,7 @@
 .env
 labenv/
 logs/
+.azure_config
 
 # Keep empty output/ directory.
 /output/*

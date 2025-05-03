@@ -9,6 +9,9 @@
   - C# Dev Kit VSCode extension
   - Azure CLI (necessary for running setup.dib)
   - PowerShell (necessary for running setup.dib)
+- Wait a few moments while GitHub Codespaces finishes setting up.
+  - It should only take a minute or so
+  - Wait until the hourglass icon on the extension's button disappears.
 - Open and run [setup.dib](setup.dib) in your GitHub Codespaces.
   - You will be prompted to enter a username and password, so enter them displayed in your lab instance.
   - Necessary resources are deployed automatically.

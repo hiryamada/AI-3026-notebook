@@ -29,11 +29,21 @@ AgentsClient client = new AgentsClient(connectionString, new DefaultAzureCredent
 
 #!csharp
 
+AgentFile file = await client.UploadFileAsync(
+    filePath: "data.txt",
+    purpose: AgentFilePurpose.Agents
+);
+CodeInterpreterToolResource codeInterpreter = new();
+codeInterpreter.FileIds.Add(file.Id);
+
+#!csharp
+
 Agent agent = await client.CreateAgentAsync(
     model: deployName,
     name: "data-agent",
     instructions: "You are an AI agent that analyzes the data in the file that has been uploaded. If the user requests a chart, create it and save it as a .png file.",
-    tools: [ new CodeInterpreterToolDefinition() ]
+    tools: [ new CodeInterpreterToolDefinition() ],
+    toolResources: new ToolResources() { CodeInterpreter = codeInterpreter }
 );
 
 #!csharp
@@ -49,19 +59,14 @@ AgentFile uploadedAgentFile = await client.UploadFileAsync(
 
 #!csharp
 
-var attachment = new MessageAttachment(fileId: uploadedAgentFile.Id, tools: [ new CodeInterpreterToolDefinition() ]);
-
-#!csharp
-
-async Task AddMessageToThread(string message, IEnumerable<MessageAttachment> attachments = null) {
+async Task AddMessageToThread(string message) {
     await client.CreateMessageAsync(
         thread.Id,
         MessageRole.User,
-        content: message,
-        attachments: attachments ?? Enumerable.Empty<MessageAttachment>()
+        content: message
     );
 }
-await AddMessageToThread("What's the category with the highest cost?", [ attachment ]);
+await AddMessageToThread("What's the category with the highest cost?");
 
 #!csharp
 
@@ -82,7 +87,7 @@ await RunAndWait();
 async Task ShowResult() {
     PageableList<ThreadMessage> response = await client.GetMessagesAsync(thread.Id);
     IReadOnlyList<ThreadMessage> messages = response.Data;
-    foreach (ThreadMessage threadMessage in messages)
+    foreach (ThreadMessage threadMessage in messages.Reverse())
     {
         Console.Write($"{threadMessage.CreatedAt:yyyy-MM-dd HH:mm:ss} - {threadMessage.Role,10}: ");
         foreach (MessageContent contentItem in threadMessage.ContentItems)
@@ -140,3 +145,11 @@ await SaveGeneratedFile("chart.png");
 #!html
 
 <img src='output/chart.png''>
+
+#!html
+
+await client.DeleteAgentAsync(agent.Id);
+
+#!html
+
+await client.DeleteThreadAsync(thread.Id);

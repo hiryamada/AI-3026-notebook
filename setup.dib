@@ -12,7 +12,15 @@
 
 #!pwsh
 
-$Env:AZURE_CONFIG_DIR = "$(pwd)\.azure_config"
+$resourceGroup = 'ResourceGroup1'
+$region = 'eastus'
+$deploymentName = 'gpt-4o'
+
+#!pwsh
+
+# Run this if you don't want to change your AZ CLI's sign-in information in your development environment
+# (this is useful when you develop bicep file in your local PC and deploy it into lab environment)
+# $Env:AZURE_CONFIG_DIR = "$(pwd)\.azure_config"
 
 #!pwsh
 
@@ -20,9 +28,35 @@ az login -u "$username" -p "$password"
 
 #!pwsh
 
+$subscriptionId = (az account show | ConvertFrom-Json).id
+
+#!pwsh
+
+# get lab instance id
 $username -match '-(\d+)' | Out-Null
 $instanceId = $matches[1]
 
 #!pwsh
 
-az deployment group create -g ResourceGroup1 -f aiproj.bicep -p location=eastus instanceId="$instanceId"
+az deployment group create -g "$resourceGroup" -f aiproj.bicep -p location="$region" instanceId="$instanceId"
+
+#!pwsh
+
+$projectName = "project$instanceId"
+
+#!pwsh
+
+$endpoint = "$region.api.azureml.ms"
+
+#!pwsh
+
+# create Azure AI Project connection string
+# endpoint;subscription_id;resource_group_name;project_name
+$connectionString = "$endpoint;$subscriptionId;$resourceGroup;$projectName"
+
+#!pwsh
+
+echo @"
+AZURE_AI_AGENT_PROJECT_CONNECTION_STRING=$connectionString
+AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME=$deploymentName
+"@ > .env

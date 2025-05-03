@@ -109,7 +109,7 @@ await Chat("Create a pie chart showing cost by category");
 
 #!csharp
 
-async Task SaveGeneratedFiles() {
+async Task SaveGeneratedFile(string fileName) {
     PageableList<ThreadMessage> response = await client.GetMessagesAsync(thread.Id);
     IReadOnlyList<ThreadMessage> messages = response.Data;
     foreach (ThreadMessage threadMessage in messages)
@@ -125,13 +125,18 @@ async Task SaveGeneratedFiles() {
                         string fileId = pathAnnotation.FileId;
                         AgentFile file = await client.GetFileAsync(fileId);
                         BinaryData fileContent = await client.GetFileContentAsync(fileId);
-                        string fileName = "output/" + Path.GetFileName(file.Filename);
-                        await File.WriteAllBytesAsync(fileName, fileContent.ToArray());
-                        Console.WriteLine($"saved: {fileName}");
+                        // string fileName = "output/" + Path.GetFileName(file.Filename);
+                        string outputPath = $"output/{fileName}";
+                        await File.WriteAllBytesAsync(outputPath, fileContent.ToArray());
+                        Console.WriteLine($"saved: {outputPath}");
                     }
                 }
             }
         }
     }
 }
-await SaveGeneratedFiles();
+await SaveGeneratedFile("chart.png");
+
+#!html
+
+<img src='output/chart.png''>

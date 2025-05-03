@@ -9,7 +9,7 @@
   - C# Dev Kit VSCode extension
   - Azure CLI (necessary for running setup.dib)
   - PowerShell (necessary for running setup.dib)
-- Open [setup.dib](setup.dib) and run all. 
+- Open and run [setup.dib](setup.dib) in your GitHub Codespaces.
   - You will be prompted to enter a username and password, so enter them displayed in your lab instance.
   - Necessary resources are deployed automatically.
     - Azure AI Hub
@@ -17,10 +17,9 @@
     - Azure AI Services
     - Storage Account
     - Key Vault
-  - `.env` file generated.
-- Open and run [lab02.dib](lab02.dib) / [lab03.dib](lab03.dib) / [lab04.dib](lab03.dib) / [lab05.dib](lab05.dib)
+  - `.env` file generated. This file contains the connection string for Azure AI Project and model deployment name.
+- Open and run [lab02.dib](lab02.dib) / [lab03.dib](lab03.dib) / [lab04.dib](lab03.dib) / [lab05.dib](lab05.dib) in your GitHub Codespaces.
   - The notebook for lab 1 is not provided because it's about Azure AI Foundry interactive experience only, no coding.
-
 
 ## References
 

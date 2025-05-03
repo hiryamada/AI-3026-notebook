@@ -6,7 +6,10 @@
 	"image": "mcr.microsoft.com/devcontainers/dotnet:1-9.0",
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
-	// "features": {},
+	"features": {
+        "azure-cli": "latest",
+        "powershell": "latest"
+    },
 
 	// Configure tool-specific properties.
 	"customizations": {

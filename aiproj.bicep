@@ -107,7 +107,7 @@ resource hub 'Microsoft.MachineLearningServices/workspaces@2025-01-01-preview' =
 
 resource project 'Microsoft.MachineLearningServices/workspaces@2025-01-01-preview' = {
   name: projectName
-  location: 'eastus'
+  location: location
   kind: 'Project'
   
   properties: {

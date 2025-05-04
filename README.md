@@ -33,7 +33,7 @@ Lab instructions
 https://microsoftlearning.github.io/mslearn-ai-agents/
 
 Lab GitHub repository
-https://microsoftlearning.github.io/mslearn-ai-agents/
+https://github.com/MicrosoftLearning/mslearn-ai-agents
 
 Azure AI Agent Service quickstart
 https://learn.microsoft.com/en-us/azure/ai-services/agents/quickstart?pivots=programming-language-csharp

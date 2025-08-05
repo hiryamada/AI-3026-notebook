@@ -82,6 +82,7 @@ ThreadRun run = await RunAndWait();
 async Task ShowResult(string runId) =>
     (await client.Messages.GetMessagesAsync(thread.Id, runId).ToListAsync())
         .Where(msg => msg.Role == MessageRole.Agent)
+        .Reverse()
         .SelectMany(msg => msg.ContentItems.OfType<MessageTextContent>())
         .Select(content => content.Text)
         .ToList()

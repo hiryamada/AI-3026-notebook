@@ -4,18 +4,21 @@
 
 #!csharp
 
-#r "nuget: Azure.AI.Projects, *-*"
-#r "nuget: Azure.Identity"
-#r "nuget: dotenv.net"
+#r "nuget: Azure.AI.Agents.Persistent, 1.1.0"
+#r "nuget: Azure.Identity, 1.14.2"
+#r "nuget: dotenv.net, 4.0.0"
+#r "nuget: System.Linq.AsyncEnumerable, 10.0.0-preview.6.25358.103"
+#r "nuget: System.Text.Json, 9.0.8"
 
 #!csharp
 
 using System.IO;
-using Azure.AI.Projects;
+using Azure.AI.Agents.Persistent;
 using Azure.Identity;
 using Azure;
 using dotenv.net;
 using dotenv.net.Utilities;
+using System.Text.Json;
 
 #!csharp
 
@@ -37,7 +40,6 @@ async Task<string> SubmitSupportTicket(string emailAddress, string description)
 
 #!csharp
 
-using System.Text.Json;
 FunctionToolDefinition submitSupportTicketTool = new(
     name: "submitSupportTicket",
     description: "Submits Support Ticket.",
@@ -72,11 +74,11 @@ var deployName = EnvReader.GetStringValue("AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME"
 
 #!csharp
 
-AgentsClient client = new AgentsClient(connectionString, new DefaultAzureCredential());
+PersistentAgentsClient client = new(connectionString, new DefaultAzureCredential());
 
 #!csharp
 
-AgentThread thread = await client.CreateThreadAsync();
+PersistentAgentThread thread = await client.Threads.CreateThreadAsync();
 
 #!csharp
 
@@ -87,7 +89,7 @@ var instructions = """
     If a file is saved, tell the user the file name.
     """;
 
-Agent agent = await client.CreateAgentAsync(
+PersistentAgent agent = await client.Administration.CreateAgentAsync(
     model: deployName,
     name: "support-agent",
     instructions: instructions,
@@ -114,7 +116,7 @@ async Task<ToolOutput> GetResolvedToolOutput(RequiredToolCall toolCall)
 #!csharp
 
 async Task AddMessageToThread(string message, IEnumerable<MessageAttachment> attachments = null) {
-    await client.CreateMessageAsync(
+    await client.Messages.CreateMessageAsync(
         thread.Id,
         MessageRole.User,
         content: message,
@@ -126,11 +128,11 @@ await AddMessageToThread("I have a technical problem");
 #!csharp
 
 async Task RunAndWait() {
-    ThreadRun run = await client.CreateRunAsync(thread.Id, agent.Id);
+    ThreadRun run = await client.Runs.CreateRunAsync(thread.Id, agent.Id);
     do
     {
         await Task.Delay(TimeSpan.FromMilliseconds(500));
-        run = await client.GetRunAsync(thread.Id, run.Id);
+        run = await client.Runs.GetRunAsync(thread.Id, run.Id);
 
         if (run.Status == RunStatus.RequiresAction
             && run.RequiredAction is SubmitToolOutputsAction submitToolOutputsAction)
@@ -140,7 +142,7 @@ async Task RunAndWait() {
             {
                 toolOutputs.Add(await GetResolvedToolOutput(toolCall));
             }
-            run = await client.SubmitToolOutputsToRunAsync(run, toolOutputs);
+            run = await client.Runs.SubmitToolOutputsToRunAsync(run, toolOutputs);
         }
     }
     while (run.Status == RunStatus.Queued
@@ -151,7 +153,8 @@ await RunAndWait();
 #!csharp
 
 async Task ShowResult() {
-    PageableList<ThreadMessage> response = await client.GetMessagesAsync(thread.Id);
+/*
+    PageableList<ThreadMessage> response = await client.Messages.GetMessagesAsync(thread.Id);
     IReadOnlyList<ThreadMessage> messages = response.Data;
     foreach (ThreadMessage threadMessage in messages)
     {
@@ -165,6 +168,13 @@ async Task ShowResult() {
             Console.WriteLine();
         }
     }
+*/
+    (await client.Messages.GetMessagesAsync(thread.Id).ToListAsync())
+    .SelectMany(msg => msg.ContentItems.OfType<MessageTextContent>())
+    .Reverse()
+    .Select(content => content.Text)
+    .ToList()
+    .ForEach(Console.WriteLine);
 }
 await ShowResult();
 

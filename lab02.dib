@@ -30,7 +30,7 @@ PersistentAgentsClient client = new(connectionString, new DefaultAzureCredential
 
 #!csharp
 
-PersistentAgentFileInfo  file = await client.Files.UploadFileAsync(
+PersistentAgentFileInfo file = await client.Files.UploadFileAsync(
     filePath: "data.txt",
     purpose: PersistentAgentFilePurpose.Agents
 );
